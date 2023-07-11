@@ -30,13 +30,5 @@
         "role": "admin",
         "username": "johdxx002",
         "id": "cb8e6aa8-9467-4e3c-a28c-cff9b879b676"
-    },
-    {
-        "firstName": "Tommy",
-        "lastName": "Schmurda",
-        "email": "Test@Test.com",
-        "role": "Test",
-        "username": "johdxx003",
-        "id": "f5b4db3b-0bda-4419-920e-bf39f9ba3855"
     }
 ]
