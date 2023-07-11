@@ -119,7 +119,8 @@ function generateUsername(newUser, users) {
   let occurrence = 1;
   for (let user of users)
   {
-    if (user.username.toLowerCase().includes(username.toLowerCase()) && parseInt(user.username.substring(6, 9)) >= occurrence)
+    let userToCheck = user.username.toLowerCase();
+    if (userToCheck.includes(username.toLowerCase()) && parseInt(user.username.substring(6, 9)) >= occurrence)
     {
       occurrence = parseInt(user.username.substring(6, 9)) + 1
     }
@@ -131,13 +132,12 @@ function generateUsername(newUser, users) {
 
 //PUT updates a specific user based on username
 router.put('/edit-user', (req, res) => {
-  res.send("edit-user");
+  
 });
 
 // DELETE a specific user based on username
 router.delete('/delete-user/:username', (req, res) => {
   const username = req.params.username;
-  res.send("delete-user");
 });
 
 //middleware
