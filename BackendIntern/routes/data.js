@@ -132,12 +132,91 @@ function generateUsername(newUser, users) {
 
 //PUT updates a specific user based on username
 router.put('/edit-user', (req, res) => {
-  
+  const editUser = req.body;
+  console.log(editUser);
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Failed to read JSON file.' });
+    }
+
+    const result = JSON.parse(data);
+      // Update the question and answer tags based on priority
+    const userIndex = result.findIndex(user => user.username.toLowerCase() === editUser.username.toLowerCase() && user.id.toLowerCase() === editUser.id.toLowerCase());
+    console.log(userIndex);
+    if (userIndex != -1) {
+      result.splice(userIndex, 1);
+      //console.log(result);
+    }
+    else
+    {
+      console.error(err);
+      return res.json({ error: 'Module not found.' });
+    }
+
+    result.push(editUser)
+
+    fs.writeFile(filePath, JSON.stringify(result), 'utf8', (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Failed to write JSON file.' });
+      }
+
+    res.json(result);
+    
+    });
+  });
 });
 
 // DELETE a specific user based on username
 router.delete('/delete-user/:username', (req, res) => {
   const username = req.params.username;
+
+  fs.readFile(xmlFilePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Failed to read XML file.' });
+    }
+
+    const parser = new xml2js.Parser();
+    parser.parseString(data, (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Failed to parse XML.' });
+      }
+
+      const module = result.faqs.module.find((module) => module.$.code.toUpperCase() === moduleCode.toUpperCase());
+      //console.log(module)
+      if (module) {
+        const faqIndex = module.faq.findIndex((faq) => faq.$.priority === priority);
+        if (faqIndex != -1) {
+          module.faq.splice(faqIndex, 1);
+        }
+      }
+      else
+      {
+        console.error(err);
+        return res.json({ error: 'Module not found.' });
+      }
+
+      const builder = new xml2js.Builder();
+      const xmlHeader = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      const xmlStylesheet = '<?xml-stylesheet type="text/xsl" href="project.xsl"?>';
+      const updatedXml = builder.buildObject(result);
+      const xmlRemove = updatedXml.replace('<\?xml version="1\.0" encoding="UTF-8" standalone="yes"\?>\n', '');
+
+      const finalXmlData = `${xmlHeader}\n${xmlStylesheet}\n${xmlRemove}`;
+
+      fs.writeFile(xmlFilePath, finalXmlData, (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: 'Failed to delete FAQ.' });
+        }
+
+        res.json(module);
+      });
+    });
+  });
 });
 
 //middleware
