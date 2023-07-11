@@ -1,0 +1,143 @@
+const { json } = require('body-parser');
+const express = require('express');
+const router = express.Router();
+const fs = require('fs');
+const uuid = require('uuid');
+const path = require('path');
+const filePath = path.join(__dirname, './data.json');
+
+//GET all users available in the JSON
+router.get('/get-user', (req, res) => {
+  try {
+    fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Failed to read Json file.' });
+      }
+  
+      returnData = JSON.parse(data);
+      res.send(returnData);
+    });
+  }
+  catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+//GET a user based on the username of the user
+router.get('/get-user/:username', (req, res) => {
+  const username = req.params.username;
+
+  console.log(username);
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Failed to read JSON file.' });
+    }
+
+    const result = JSON.parse(data);
+
+    console.log(result[0].username);
+    const returnUser = result.find(user => user.username === username);
+      if (!returnUser) {
+        return res.status(404).json({ error: 'User not found.' });
+      }
+
+      res.json(returnUser);
+  });
+});
+
+//POST a new user to the JSON.
+router.post('/add-user', (req, res) => {
+  const newUser = req.body;
+
+  if (!newUser || !newUser.firstName || !newUser.lastName || !newUser.email || !newUser.role)
+  {
+    console.log("Fields empty or incomplete");
+    return res.status(500).json({ error: 'Fields empty or incomplete.' });
+  }
+
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Failed to read JSON file.' });
+    }
+
+      const users = JSON.parse(data) || [];
+      newUser.username = generateUsername(newUser, users);
+      console.log("New username is: " + newUser.username);
+      newUser.id = uuid.v4();
+      users.push(newUser);
+
+      fs.writeFile(filePath, JSON.stringify(users), 'utf8', (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: 'Failed to write JSON file.' });
+        }
+
+      res.json(users);
+    });
+  });
+});
+
+// Create username function
+function generateUsername(newUser, users) {
+  firstName = newUser.firstName;
+  lastName = newUser.lastName;
+  username = "";
+  username += firstName.substring(0, 3);
+  console.log("first Name: " + firstName);
+  console.log("last Name: " + lastName);
+
+  const vowels = ["a", "e", "i", "o", "u"];
+
+  let counter = 0
+
+  for (let letter of lastName.toLowerCase()) 
+  {
+    if (!vowels.includes(letter) && counter < 3) 
+    {
+      username += letter;
+      counter++;
+    }
+    else if (counter < 3)
+    {
+      break;
+    }
+  }
+
+  if (counter < 3)
+  {
+    while (counter < 3)
+    {
+      username += 'x';
+      counter++;
+    }
+  }
+
+  let occurrence = 1;
+  for (let user of users)
+  {
+    if (user.username.includes(username) && parseInt(user.username.substring(6, 9)) >= occurrence)
+    {
+      occurrence = parseInt(user.username.substring(6, 9)) + 1
+    }
+  }
+
+  username += String(occurrence).padStart(3, '0');
+}
+
+//PUT updates a specific user based on username
+router.put('/edit-user', (req, res) => {
+  res.send("edit-user");
+});
+
+// DELETE a specific user based on username
+router.delete('/delete-user/:username', (req, res) => {
+  const username = req.params.username;
+  res.send("delete-user");
+});
+
+//middleware
+module.exports = router;
