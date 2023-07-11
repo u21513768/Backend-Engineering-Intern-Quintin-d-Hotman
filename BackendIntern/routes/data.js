@@ -126,6 +126,7 @@ function generateUsername(newUser, users) {
   }
 
   username += String(occurrence).padStart(3, '0');
+  return username;
 }
 
 //PUT updates a specific user based on username
