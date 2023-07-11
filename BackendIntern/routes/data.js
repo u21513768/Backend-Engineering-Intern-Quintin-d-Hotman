@@ -29,23 +29,28 @@ router.get('/get-user', (req, res) => {
 router.get('/get-user/:username', (req, res) => {
   const username = req.params.username;
 
-  console.log(username);
-  fs.readFile(filePath, 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Failed to read JSON file.' });
-    }
-
-    const result = JSON.parse(data);
-
-    console.log(result[0].username);
-    const returnUser = result.find(user => user.username === username);
-      if (!returnUser) {
-        return res.status(404).json({ error: 'User not found.' });
+  try {
+    fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Failed to read JSON file.' });
       }
 
-      res.json(returnUser);
-  });
+      const result = JSON.parse(data);
+
+      console.log(result[0].username);
+      const returnUser = result.find(user => user.username === username);
+        if (!returnUser) {
+          return res.status(404).json({ error: 'User not found.' });
+        }
+
+        res.json(returnUser);
+    });
+  }
+  catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 //POST a new user to the JSON.
@@ -58,27 +63,33 @@ router.post('/add-user', (req, res) => {
     return res.status(500).json({ error: 'Fields empty or incomplete.' });
   }
 
-  fs.readFile(filePath, 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Failed to read JSON file.' });
-    }
+  try {
+    fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Failed to read JSON file.' });
+      }
 
-      const users = JSON.parse(data) || [];
-      newUser.username = generateUsername(newUser, users);
-      console.log("New username is: " + newUser.username);
-      newUser.id = uuid.v4();
-      users.push(newUser);
+        const users = JSON.parse(data) || [];
+        newUser.username = generateUsername(newUser, users);
+        console.log("New username is: " + newUser.username);
+        newUser.id = uuid.v4();
+        users.push(newUser);
 
-      fs.writeFile(filePath, JSON.stringify(users), 'utf8', (err) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ error: 'Failed to write JSON file.' });
-        }
+        fs.writeFile(filePath, JSON.stringify(users), 'utf8', (err) => {
+          if (err) {
+            console.error(err);
+            return res.status(500).json({ error: 'Failed to write JSON file.' });
+          }
 
-      res.json(users);
+        res.json(users);
+      });
     });
-  });
+  }
+  catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 // Create username function
@@ -133,90 +144,93 @@ function generateUsername(newUser, users) {
 //PUT updates a specific user based on username
 router.put('/edit-user', (req, res) => {
   const editUser = req.body;
-  console.log(editUser);
-  fs.readFile(filePath, 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Failed to read JSON file.' });
-    }
 
-    const result = JSON.parse(data);
-      // Update the question and answer tags based on priority
-    const userIndex = result.findIndex(user => user.username.toLowerCase() === editUser.username.toLowerCase() && user.id.toLowerCase() === editUser.id.toLowerCase());
-    console.log(userIndex);
-    if (userIndex != -1) {
-      result.splice(userIndex, 1);
-      //console.log(result);
-    }
-    else
-    {
-      console.error(err);
-      return res.json({ error: 'Module not found.' });
-    }
+  if (!editUser || !editUser.firstName || !editUser.lastName || !editUser.email || !editUser.role || !editUser.usernamer || !editUser.id)
+  {
+    console.log("Fields empty or incomplete");
+    return res.status(500).json({ error: 'Fields empty or incomplete.' });
+  }
 
-    result.push(editUser)
-
-    fs.writeFile(filePath, JSON.stringify(result), 'utf8', (err) => {
+  try {
+    fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
         console.error(err);
-        return res.status(500).json({ error: 'Failed to write JSON file.' });
+        return res.status(500).json({ error: 'Failed to read JSON file.' });
       }
 
-    res.json(result);
+      const result = JSON.parse(data);
+        // Update the question and answer tags based on priority
+      const userIndex = result.findIndex(user => user.username.toLowerCase() === editUser.username.toLowerCase() && user.id.toLowerCase() === editUser.id.toLowerCase());
     
+      if (userIndex != -1) {
+        result.splice(userIndex, 1);
+        //console.log(result);
+      }
+      else
+      {
+        console.error(err);
+        return res.json({ error: 'User not found.' });
+      }
+
+      result.push(editUser)
+
+      fs.writeFile(filePath, JSON.stringify(result), 'utf8', (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: 'Failed to write JSON file.' });
+        }
+
+      res.json(result);
+
+      });
     });
-  });
+  }
+  catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 // DELETE a specific user based on username
 router.delete('/delete-user/:username', (req, res) => {
   const username = req.params.username;
 
-  fs.readFile(xmlFilePath, 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Failed to read XML file.' });
-    }
-
-    const parser = new xml2js.Parser();
-    parser.parseString(data, (err, result) => {
+  try {
+    fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
         console.error(err);
-        return res.status(500).json({ error: 'Failed to parse XML.' });
+        return res.status(500).json({ error: 'Failed to read JSON file.' });
       }
 
-      const module = result.faqs.module.find((module) => module.$.code.toUpperCase() === moduleCode.toUpperCase());
-      //console.log(module)
-      if (module) {
-        const faqIndex = module.faq.findIndex((faq) => faq.$.priority === priority);
-        if (faqIndex != -1) {
-          module.faq.splice(faqIndex, 1);
-        }
+      const result = JSON.parse(data);
+        // Update the question and answer tags based on priority
+      const userIndex = result.findIndex(user => user.username.toLowerCase() === username);
+    
+      if (userIndex != -1) {
+        result.splice(userIndex, 1);
+        //console.log(result);
       }
       else
       {
         console.error(err);
-        return res.json({ error: 'Module not found.' });
+        return res.json({ error: 'User not found.' });
       }
 
-      const builder = new xml2js.Builder();
-      const xmlHeader = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-      const xmlStylesheet = '<?xml-stylesheet type="text/xsl" href="project.xsl"?>';
-      const updatedXml = builder.buildObject(result);
-      const xmlRemove = updatedXml.replace('<\?xml version="1\.0" encoding="UTF-8" standalone="yes"\?>\n', '');
-
-      const finalXmlData = `${xmlHeader}\n${xmlStylesheet}\n${xmlRemove}`;
-
-      fs.writeFile(xmlFilePath, finalXmlData, (err) => {
+      fs.writeFile(filePath, JSON.stringify(result), 'utf8', (err) => {
         if (err) {
           console.error(err);
-          return res.status(500).json({ error: 'Failed to delete FAQ.' });
+          return res.status(500).json({ error: 'Failed to write JSON file.' });
         }
 
-        res.json(module);
+      res.json(result);
+
       });
     });
-  });
+  }
+  catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 //middleware
