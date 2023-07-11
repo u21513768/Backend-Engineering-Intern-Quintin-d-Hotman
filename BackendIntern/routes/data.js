@@ -86,7 +86,7 @@ function generateUsername(newUser, users) {
   firstName = newUser.firstName;
   lastName = newUser.lastName;
   username = "";
-  username += firstName.substring(0, 3);
+  username += firstName.substring(0, 3).toLowerCase();
   console.log("first Name: " + firstName);
   console.log("last Name: " + lastName);
 
@@ -98,7 +98,7 @@ function generateUsername(newUser, users) {
   {
     if (!vowels.includes(letter) && counter < 3) 
     {
-      username += letter;
+      username += letter.toLowerCase();
       counter++;
     }
     else if (counter < 3)
@@ -119,7 +119,7 @@ function generateUsername(newUser, users) {
   let occurrence = 1;
   for (let user of users)
   {
-    if (user.username.includes(username) && parseInt(user.username.substring(6, 9)) >= occurrence)
+    if (user.username.toLowerCase().includes(username.toLowerCase()) && parseInt(user.username.substring(6, 9)) >= occurrence)
     {
       occurrence = parseInt(user.username.substring(6, 9)) + 1
     }
